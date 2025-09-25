@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-box-open"></i>
+                <h2>GestãoPro</h2>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#dashboard" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="#products"><i class="fas fa-boxes-stacked"></i> Produtos</a></li>
+                    <li><a href="#sales"><i class="fas fa-dollar-sign"></i> Registrar Venda</a></li>
+                    <li><a href="#purchases"><i class="fas fa-shopping-cart"></i> Registrar Compra</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Overlay para mobile -->
+        <div id="overlay"></div>
+
+        <!-- Conteúdo -->
+        <main class="main-content">
+            <!-- Dashboard -->
+            <section id="dashboard" class="content-section">
+                <h1>Dashboard</h1>
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <h3>Total de Vendas (R$)</h3>
+                        <p id="total-revenue">R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h3>Produtos em Estoque</h3>
+                        <p id="total-products">0</p>
+                    </div>
+                    <div class="card">
+                        <h3>Itens com Estoque Baixo</h3>
+                        <p id="low-stock-items">0</p>
+                    </div>
+                </div>
+                <div class="dashboard-charts">
+                    <div class="chart-container">
+                        <h3>Vendas por Dia</h3>
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Top 5 Produtos (por R$)</h3>
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Produtos -->
+            <section id="products" class="content-section hidden">
+                <h1>Gestão de Produtos</h1>
+                <div class="form-container">
+                    <h3>Adicionar Novo Produto</h3>
+                    <form id="addProductForm">
+                        <input type="text" id="productName" placeholder="Nome do Produto" required>
+                        <input type="number" id="productStock" placeholder="Quantidade em Estoque" required min="0">
+                        <input type="number" id="productPrice" placeholder="Preço de Venda (R$)" required min="0" step="0.01">
+                        <button type="submit">Adicionar Produto</button>
+                    </form>
+                </div>
+                <div class="table-container">
+                    <h3>Lista de Produtos</h3>
+                    <input type="text" id="productSearch" placeholder="🔍 Pesquisar produto...">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Estoque</th>
+                                <th>Preço (R$)</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Vendas -->
+            <section id="sales" class="content-section hidden">
+                <h1>Registrar Nova Venda</h1>
+                <div class="form-container wide">
+                    <form id="addSaleForm">
+                        <select id="saleProductSelect" required>
+                            <option value="" disabled selected>Selecione um produto</option>
+                        </select>
+                        <input type="number" id="saleQuantity" placeholder="Quantidade Vendida" required min="1">
+                        <button type="submit">Registrar Venda</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Compras -->
+            <section id="purchases" class="content-section hidden">
+                <h1>Registrar Nova Compra</h1>
+                <div class="form-container wide">
+                    <form id="addPurchaseForm">
+                        <select id="purchaseProductSelect" required>
+                            <option value="" disabled selected>Selecione um produto</option>
+                        </select>
+                        <input type="number" id="purchaseQuantity" placeholder="Quantidade Comprada" required min="1">
+                        <button type="submit">Registrar Compra</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+      import { getFirestore } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBMcamJBRGraXkVAY6bJ74JWRuGhhBJQPo",
+        authDomain: "sistemadegestao-915ff.firebaseapp.com",
+        projectId: "sistemadegestao-915ff",
+        storageBucket: "sistemadegestao-915ff.firebasestorage.app",
+        messagingSenderId: "244734501885",
+        appId: "1:244734501885:web:215cd89250d06f5f7d2f94",
+        measurementId: "G-W207VXTC54"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      window.db = db;
+    </script>
+
+    <!-- Script principal -->
+    <script type="module" src="script.js" defer></script>
+    <script src="menu.js"></script>
+</body>
+</html>
