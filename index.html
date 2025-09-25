@@ -9,10 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
-
     <div class="container">
-        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <i class="fas fa-box-open"></i>
@@ -28,14 +25,18 @@
             </nav>
         </aside>
 
-        <!-- Overlay para mobile -->
-        <div id="overlay"></div>
-
-        <!-- Conteúdo -->
         <main class="main-content">
-            <!-- Dashboard -->
+            <button class="menu-toggle" aria-label="Abrir menu">
+                <i class="fas fa-bars"></i>
+            </button>
             <section id="dashboard" class="content-section">
                 <h1>Dashboard</h1>
+                <div class="dashboard-filters">
+                    <button class="filter-btn active" data-period="all">Tudo</button>
+                    <button class="filter-btn" data-period="today">Hoje</button>
+                    <button class="filter-btn" data-period="week">Esta Semana</button>
+                    <button class="filter-btn" data-period="month">Este Mês</button>
+                </div>
                 <div class="dashboard-cards">
                     <div class="card">
                         <h3>Total de Vendas (R$)</h3>
@@ -61,8 +62,6 @@
                     </div>
                 </div>
             </section>
-
-            <!-- Produtos -->
             <section id="products" class="content-section hidden">
                 <h1>Gestão de Produtos</h1>
                 <div class="form-container">
@@ -90,8 +89,6 @@
                     </table>
                 </div>
             </section>
-
-            <!-- Vendas -->
             <section id="sales" class="content-section hidden">
                 <h1>Registrar Nova Venda</h1>
                 <div class="form-container wide">
@@ -104,8 +101,6 @@
                     </form>
                 </div>
             </section>
-
-            <!-- Compras -->
             <section id="purchases" class="content-section hidden">
                 <h1>Registrar Nova Compra</h1>
                 <div class="form-container wide">
@@ -120,8 +115,13 @@
             </section>
         </main>
     </div>
+    <footer>
+        <p>&copy; <span id="current-year"></span> GestãoPro. Todos os direitos reservados.</p>
+        <p class="developed-by">
+            Desenvolvido por <a href="https://www.jsferreira.com.br/" target="_blank" rel="noopener noreferrer">JS Ferreira | Automações e Soluções Tecnologicas</a>
+        </p>
+    </footer>
 
-    <!-- Firebase -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
       import { getFirestore } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
@@ -139,10 +139,8 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
       window.db = db;
+      window.firebaseApp = app; // <-- CORREÇÃO: Garante que o Auth funcione no script.js
     </script>
-
-    <!-- Script principal -->
     <script type="module" src="script.js" defer></script>
-    
 </body>
 </html>
