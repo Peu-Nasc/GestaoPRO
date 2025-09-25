@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 
+/* --- Variáveis Globais --- */
 :root {
     --primary-color: #4f46e5;
     --secondary-color: #f3f4f6;
@@ -11,30 +12,33 @@
     --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
+/* --- Reset Global --- */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* --- ESTRUTURA PRINCIPAL PARA O STICKY FOOTER --- */
-html {
+html, body {
     height: 100%;
 }
+
 body {
-    min-height: 100%;
     display: flex;
     flex-direction: column;
     font-family: 'Poppins', sans-serif;
     background-color: var(--secondary-color);
     color: var(--text-color);
-    overflow-x: hidden; /* PROÍBE ROLAGEM HORIZONTAL NA PÁGINA INTEIRA */
+    overflow-x: hidden;
 }
+
+/* --- Estrutura principal --- */
 .container {
-    flex: 1 0 auto;
     display: flex;
+    flex: 1;
+    flex-direction: row;
+    min-height: 100%;
 }
-/* --- FIM DA ESTRUTURA PRINCIPAL --- */
 
 /* --- Sidebar --- */
 .sidebar {
@@ -83,32 +87,30 @@ body {
 
 /* --- Main Content --- */
 .main-content {
-    flex-grow: 1;
+    flex: 1;
     margin-left: 250px;
     padding: 2rem;
+    width: 100%;
     transition: margin-left 0.3s ease-in-out;
-    width: 100%; /* Garante que o conteúdo não ultrapasse o espaço */
 }
 .content-section {
     background-color: var(--background-color);
     padding: 2rem;
     border-radius: 8px;
     box-shadow: var(--shadow);
+    margin-bottom: 2rem;
 }
 .content-section h1 {
     margin-bottom: 1.5rem;
     font-size: 2rem;
     font-weight: 700;
 }
-.hidden {
-    display: none;
-}
 
-/* --- Dashboard --- */
+/* --- Dashboard Cards --- */
 .dashboard-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Reduzido para melhor encaixe */
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
     margin-bottom: 2rem;
 }
 .card {
@@ -129,7 +131,7 @@ body {
     color: var(--primary-color);
 }
 
-/* --- Estilos para Filtros do Dashboard --- */
+/* --- Dashboard Filters --- */
 .dashboard-filters {
     display: flex;
     justify-content: center;
@@ -226,10 +228,10 @@ th {
     background-color: #dc2626;
 }
 
-/* --- Gráficos --- */
+/* --- Dashboard Charts --- */
 .dashboard-charts {
     display: grid;
-    grid-template-columns: 1fr; /* Começa com uma coluna por padrão */
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
     margin-top: 2rem;
 }
@@ -249,8 +251,8 @@ th {
 .menu-toggle {
     display: none;
     position: fixed;
-    top: 1rem;
-    left: 1rem;
+    top: 1.5rem;
+    left: 1.5rem;
     z-index: 1000;
     background-color: var(--primary-color);
     color: white;
@@ -272,7 +274,7 @@ footer {
     color: #6b7280;
     font-size: 0.9rem;
     border-top: 1px solid var(--border-color);
-    margin-left: 250px;
+    width: 100%;
     transition: margin-left 0.3s ease-in-out;
 }
 footer a {
@@ -285,13 +287,6 @@ footer a:hover {
 }
 
 /* --- Responsividade --- */
-@media (min-width: 993px) {
-    /* Aplica duas colunas para os gráficos apenas em telas grandes */
-    .dashboard-charts {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
 @media (max-width: 992px) {
     .sidebar {
         transform: translateX(-100%);
@@ -301,10 +296,12 @@ footer a:hover {
     }
     .main-content {
         margin-left: 0;
-        padding: 1.5rem; /* Espaçamento para telas médias */
     }
     .menu-toggle {
         display: block;
+    }
+    .dashboard-charts {
+        grid-template-columns: 1fr;
     }
     .chart-container {
         height: 250px;
@@ -315,8 +312,11 @@ footer a:hover {
 }
 
 @media (max-width: 768px) {
+    .main-content {
+        padding: 1rem;
+    }
     .content-section {
-        padding: 1.5rem;
+        padding: 1rem;
     }
     .content-section h1 {
         font-size: 1.5rem;
@@ -330,9 +330,15 @@ footer a:hover {
         font-size: 1.5rem;
     }
     .table-container {
-        overflow-x: auto; /* AQUI ESTÁ A SOLUÇÃO PARA A TABELA */
+        overflow-x: auto;
+    }
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+    }
+    .dashboard-charts {
+        grid-template-columns: 1fr;
     }
     .chart-container {
-        height: 220px;
+        height: 200px;
     }
 }
