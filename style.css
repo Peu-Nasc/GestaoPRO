@@ -28,7 +28,7 @@ body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--secondary-color);
     color: var(--text-color);
-    overflow-x: hidden; /* IMPEDE A ROLAGEM HORIZONTAL DO CORPO DA PÁGINA */
+    overflow-x: hidden; /* PROÍBE ROLAGEM HORIZONTAL NA PÁGINA INTEIRA */
 }
 .container {
     flex: 1 0 auto;
@@ -87,7 +87,7 @@ body {
     margin-left: 250px;
     padding: 2rem;
     transition: margin-left 0.3s ease-in-out;
-    width: 100%; /* Garante que o conteúdo não ultrapasse o espaço disponível */
+    width: 100%; /* Garante que o conteúdo não ultrapasse o espaço */
 }
 .content-section {
     background-color: var(--background-color);
@@ -108,7 +108,7 @@ body {
 .dashboard-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Reduzido para melhor encaixe */
-    gap: 1.5rem;
+    gap: 1rem;
     margin-bottom: 2rem;
 }
 .card {
@@ -229,7 +229,7 @@ th {
 /* --- Gráficos --- */
 .dashboard-charts {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr; /* Começa com uma coluna por padrão */
     gap: 1.5rem;
     margin-top: 2rem;
 }
@@ -249,8 +249,8 @@ th {
 .menu-toggle {
     display: none;
     position: fixed;
-    top: 1.5rem;
-    left: 1.5rem;
+    top: 1rem;
+    left: 1rem;
     z-index: 1000;
     background-color: var(--primary-color);
     color: white;
@@ -285,6 +285,13 @@ footer a:hover {
 }
 
 /* --- Responsividade --- */
+@media (min-width: 993px) {
+    /* Aplica duas colunas para os gráficos apenas em telas grandes */
+    .dashboard-charts {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
 @media (max-width: 992px) {
     .sidebar {
         transform: translateX(-100%);
@@ -294,12 +301,10 @@ footer a:hover {
     }
     .main-content {
         margin-left: 0;
+        padding: 1.5rem; /* Espaçamento para telas médias */
     }
     .menu-toggle {
         display: block;
-    }
-    .dashboard-charts {
-        grid-template-columns: 1fr;
     }
     .chart-container {
         height: 250px;
@@ -310,9 +315,6 @@ footer a:hover {
 }
 
 @media (max-width: 768px) {
-    .main-content {
-        padding: 1rem 1.5rem;
-    }
     .content-section {
         padding: 1.5rem;
     }
@@ -328,7 +330,7 @@ footer a:hover {
         font-size: 1.5rem;
     }
     .table-container {
-        overflow-x: auto;
+        overflow-x: auto; /* AQUI ESTÁ A SOLUÇÃO PARA A TABELA */
     }
     .chart-container {
         height: 220px;
