@@ -324,13 +324,9 @@ th {
         font-size: 1.5rem;
     }
 
+    /* ADICIONE ESTE BLOCO PARA A TABELA RESPONSIVA */
     .table-container {
-        overflow-x: auto;
-    }
-
-    .table-container table {
-        display: block;
-        min-width: 600px; /* rolagem horizontal no mobile */
+        overflow-x: auto; /* A MÁGICA ACONTECE AQUI */
     }
 
     .chart-container {
