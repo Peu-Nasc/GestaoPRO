@@ -8,159 +8,98 @@ import {
 const auth = getAuth(window.firebaseApp);
 const db = window.db;
 
-// LÓGICA DE AUTENTICAÇÃO
 onAuthStateChanged(auth, (user) => {
-    if (user) {
-        // O utilizador está logado, busca os dados da empresa e inicia a aplicação
-        console.log("Utilizador autenticado:", user.uid);
-        iniciarAplicacao(user);
-    } else {
-        // Ninguém logado, redireciona para a página de login
-        console.log("Nenhum utilizador autenticado. Redirecionando para login...");
-        window.location.href = 'login.html';
-    }
+    if (user) iniciarAplicacao(user);
+    else window.location.href = 'login.html';
 });
 
 async function iniciarAplicacao(user) {
-    // Busca a empresaId do utilizador logado
     const utilizadorDocRef = doc(db, "utilizadores", user.uid);
     const utilizadorDocSnap = await getDoc(utilizadorDocRef);
-
-    if (!utilizadorDocSnap.exists()) {
-        console.error("Dados do utilizador não encontrados no Firestore!");
-        alert("Erro de configuração da conta. Contacte o suporte.");
-        signOut(auth); // Desloga o utilizador se a conta estiver mal configurada
-        return;
-    }
-    
+    if (!utilizadorDocSnap.exists()) { alert("Erro de configuração da conta."); signOut(auth); return; }
     const empresaLogadaId = utilizadorDocSnap.data().empresaId;
-    console.log("Empresa ID:", empresaLogadaId);
 
     // --- ELEMENTOS DO DOM ---
-    const navLinks = document.querySelectorAll('nav a');
-    const contentSections = document.querySelectorAll('.content-section');
-    const totalRevenueEl = document.getElementById('total-revenue');
-    const totalProductsEl = document.getElementById('total-products');
-    const lowStockItemsEl = document.getElementById('low-stock-items');
-    const salesChartCanvas = document.getElementById('salesChart');
-    const topProductsCanvas = document.getElementById('topProductsChart');
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const addProductForm = document.getElementById('addProductForm'), productNameInput = document.getElementById('productName'), productStockInput = document.getElementById('productStock'), productPriceInput = document.getElementById('productPrice'), productTableBody = document.getElementById('productTableBody'), productSearchInput = document.getElementById('productSearch'), saleProductSelect = document.getElementById('saleProductSelect'), saleQuantityInput = document.getElementById('saleQuantity'), addSaleForm = document.getElementById('addSaleForm'), purchaseProductSelect = document.getElementById('purchaseProductSelect'), purchaseQuantityInput = document.getElementById('purchaseQuantity'), addPurchaseForm = document.getElementById('addPurchaseForm');
-    const menuToggle = document.querySelector('.menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
+    const navLinks=document.querySelectorAll('nav a'), contentSections=document.querySelectorAll('.content-section'), totalRevenueEl=document.getElementById('total-revenue'), totalExpensesEl=document.getElementById('total-expenses'), grossProfitEl=document.getElementById('gross-profit'), totalProductsEl=document.getElementById('total-products'), lowStockItemsEl=document.getElementById('low-stock-items'), salesChartCanvas=document.getElementById('salesChart'), topProductsCanvas=document.getElementById('topProductsChart'), filterButtons=document.querySelectorAll('.filter-btn'), addProductForm=document.getElementById('addProductForm'), productNameInput=document.getElementById('productName'), productStockInput=document.getElementById('productStock'), productPriceInput=document.getElementById('productPrice'), productTableBody=document.getElementById('productTableBody'), productSearchInput=document.getElementById('productSearch'), saleProductSelect=document.getElementById('saleProductSelect'), saleQuantityInput=document.getElementById('saleQuantity'), addSaleForm=document.getElementById('addSaleForm'), menuToggle=document.querySelector('.menu-toggle'), sidebar=document.querySelector('.sidebar'), addExpenseForm=document.getElementById('addExpenseForm'), expenseDescriptionInput=document.getElementById('expenseDescription'), expenseValueInput=document.getElementById('expenseValue'), expenseCategoryInput=document.getElementById('expenseCategory'), expensesTableBody=document.getElementById('expensesTableBody'), stockUpdateFields=document.getElementById('stockUpdateFields'), updateStockCheck=document.getElementById('updateStockCheck'), stockInputs=document.getElementById('stockInputs'), expenseProductSelect=document.getElementById('expenseProductSelect'), expenseQuantity=document.getElementById('expenseQuantity');
     
-    // Atualiza o ano no footer
     document.getElementById('current-year').textContent = new Date().getFullYear();
+    if (!document.getElementById('logoutBtn')) { const li = document.createElement('li'); li.innerHTML = `<a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Sair</a>`; document.querySelector('.sidebar nav ul').appendChild(li); li.addEventListener('click', () => signOut(auth)); }
 
-    // Adiciona botão de Logout (se ainda não existir)
-    if (!document.getElementById('logoutBtn')) {
-        const logoutButton = document.createElement('li');
-        logoutButton.innerHTML = `<a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Sair</a>`;
-        document.querySelector('.sidebar nav ul').appendChild(logoutButton);
-        logoutButton.addEventListener('click', () => signOut(auth));
-    }
+    let allProducts = [], allSales = [], allExpenses = [], salesChart, topProductsChart;
 
-    // --- DADOS EM TEMPO REAL ---
-    let allProducts = [], allSales = [], salesChart, topProductsChart;
-
-    // --- FUNÇÕES DE LÓGICA ---
     async function fetchDataAndRender() {
-        await fetchProducts();
-        await fetchSales();
+        await Promise.all([fetchProducts(), fetchSales(), fetchExpenses()]);
         renderAll();
     }
 
-    async function fetchProducts() {
-        try { 
-            const q = query(collection(db, "products"), where("empresaId", "==", empresaLogadaId));
-            const querySnapshot = await getDocs(q);
-            allProducts = []; 
-            querySnapshot.forEach((doc) => allProducts.push({ id: doc.id, ...doc.data() })); 
-        } catch (e) { console.error("Erro ao buscar produtos: ", e); }
-    }
-    async function fetchSales() {
-        try { 
-            const q = query(collection(db, "sales"), where("empresaId", "==", empresaLogadaId));
-            const querySnapshot = await getDocs(q);
-            allSales = []; 
-            querySnapshot.forEach((doc) => allSales.push({ id: doc.id, ...doc.data() })); 
-        } catch (e) { console.error("Erro ao buscar vendas: ", e); }
-    }
+    async function fetchProducts() { const q = query(collection(db, "products"), where("empresaId", "==", empresaLogadaId)); const snap = await getDocs(q); allProducts = []; snap.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() })); }
+    async function fetchSales() { const q = query(collection(db, "sales"), where("empresaId", "==", empresaLogadaId)); const snap = await getDocs(q); allSales = []; snap.forEach(doc => allSales.push({ id: doc.id, ...doc.data() })); }
+    async function fetchExpenses() { const q = query(collection(db, "despesas"), where("empresaId", "==", empresaLogadaId)); const snap = await getDocs(q); allExpenses = []; snap.forEach(doc => allExpenses.push({ id: doc.id, ...doc.data() })); }
 
-    function renderAll(period = 'all') {
-        renderProductTable();
-        updateProductSelects();
-        updateDashboard(period);
-    }
-
-    const renderProductTable = (filter = '') => { 
-        const filteredProducts = allProducts.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
-        productTableBody.innerHTML = ''; 
-        if(filteredProducts.length === 0){ productTableBody.innerHTML = `<tr><td colspan="4">Nenhum produto.</td></tr>`; return; }
-        filteredProducts.forEach(p => { const r = document.createElement('tr'); r.innerHTML = `<td>${p.name}</td><td style="color:${p.stock <= 10 ? '#ef4444' : 'inherit'}">${p.stock}</td><td>R$ ${p.price.toFixed(2)}</td><td><button class="delete-btn" data-id="${p.id}"><i class="fas fa-trash"></i></button></td>`; productTableBody.appendChild(r); });
-    };
-
-    const updateProductSelects = () => {
-        saleProductSelect.innerHTML = '<option value="" disabled selected>Selecione</option>'; purchaseProductSelect.innerHTML = '<option value="" disabled selected>Selecione</option>';
-        allProducts.forEach(p => { const o = `<option value="${p.id}">${p.name} (Estoque: ${p.stock})</option>`; saleProductSelect.innerHTML += o; purchaseProductSelect.innerHTML += o; });
-    };
+    function renderAll(period = 'all') { renderProductTable(); updateProductSelects(); renderExpensesTable(); updateDashboard(period); }
+    const renderProductTable = (filter = '') => { const f = allProducts.filter(p=>p.name.toLowerCase().includes(filter.toLowerCase())); productTableBody.innerHTML = ''; if(f.length===0){productTableBody.innerHTML=`<tr><td colspan="4">Nenhum produto.</td></tr>`;return;} f.forEach(p=>{const r=document.createElement('tr');r.innerHTML=`<td>${p.name}</td><td style="color:${p.stock<=10?'#ef4444':'inherit'}">${p.stock}</td><td>R$ ${p.price.toFixed(2)}</td><td><button class="delete-btn" data-id="${p.id}"><i class="fas fa-trash"></i></button></td>`;productTableBody.appendChild(r);}); };
+    const renderExpensesTable = () => { expensesTableBody.innerHTML = ''; if(allExpenses.length===0){expensesTableBody.innerHTML=`<tr><td colspan="4">Nenhuma despesa.</td></tr>`;return;} const s = [...allExpenses].sort((a,b)=>b.date.seconds-a.date.seconds); s.forEach(ex=>{const r=document.createElement('tr'),d=new Date(ex.date.seconds*1000).toLocaleDateString('pt-BR');r.innerHTML=`<td>${ex.description}</td><td>R$ ${ex.value.toFixed(2)}</td><td>${ex.category}</td><td>${d}</td>`;expensesTableBody.appendChild(r);}); };
+    const updateProductSelects = () => { const sels=[saleProductSelect,expenseProductSelect]; sels.forEach(s=>s.innerHTML='<option value="" disabled selected>Selecione</option>'); allProducts.forEach(p=>{const o=`<option value="${p.id}">${p.name} (Estoque: ${p.stock})</option>`;sels.forEach(s=>s.innerHTML+=o);}); };
 
     const updateDashboard = (period = 'all') => {
-        const filteredSales = filterSalesByPeriod(allSales, period);
-        const lowStockCount = allProducts.filter(p => p.stock <= 10).length;
-        totalProductsEl.textContent = allProducts.length;
-        lowStockItemsEl.textContent = lowStockCount;
-        const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
-        totalRevenueEl.textContent = `R$ ${totalRevenue.toFixed(2)}`;
-        updateSalesChart(filteredSales);
-        updateTopProductsChart(filteredSales);
+        const filteredSales = filterByPeriod(allSales, period);
+        const filteredExpenses = filterByPeriod(allExpenses, period);
+        const lowStockCount = allProducts.filter(p=>p.stock<=10).length; totalProductsEl.textContent=allProducts.length; lowStockItemsEl.textContent=lowStockCount;
+        const totalRevenue = filteredSales.reduce((s,i)=>s+i.total,0);
+        const totalExpenses = filteredExpenses.reduce((s,i)=>s+i.value,0);
+        const grossProfit = totalRevenue - totalExpenses;
+        totalRevenueEl.textContent=`R$ ${totalRevenue.toFixed(2)}`; totalExpensesEl.textContent=`R$ ${totalExpenses.toFixed(2)}`; grossProfitEl.textContent=`R$ ${grossProfit.toFixed(2)}`;
+        updateSalesChart(filteredSales); updateTopProductsChart(filteredSales);
     };
 
-    function filterSalesByPeriod(sales, period) {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        if (period === 'today') {
-            return sales.filter(sale => new Date(sale.date.seconds * 1000) >= today);
-        }
-        if (period === 'week') {
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay());
-            return sales.filter(sale => new Date(sale.date.seconds * 1000) >= startOfWeek);
-        }
-        if (period === 'month') {
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            return sales.filter(sale => new Date(sale.date.seconds * 1000) >= startOfMonth);
-        }
-        return sales;
-    }
-    
-    const updateSalesChart = (salesData) => {
-        const salesByDate = salesData.reduce((a,c) => { const d = new Date(c.date.seconds*1000).toLocaleDateString('pt-BR'); a[d] = (a[d] || 0) + c.total; return a; }, {});
-        const labels = Object.keys(salesByDate);
-        const data = Object.values(salesByDate);
-        if (salesChart) salesChart.destroy();
-        salesChart = new Chart(salesChartCanvas, { type:'line', data:{ labels, datasets:[{ label:'Vendas/Dia (R$)', data, borderColor:'#4f46e5', backgroundColor:'rgba(79,70,229,0.1)', fill:true, tension:0.3 }] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } } });
-    };
-
-    const updateTopProductsChart = (salesData) => {
-        const productSales = salesData.reduce((acc, sale) => { acc[sale.productName] = (acc[sale.productName] || 0) + sale.total; return acc; }, {});
-        const sortedProducts = Object.entries(productSales).sort(([,a],[,b]) => b-a).slice(0, 5);
-        const labels = sortedProducts.map(([name]) => name);
-        const data = sortedProducts.map(([, total]) => total);
-        if (topProductsChart) topProductsChart.destroy();
-        topProductsChart = new Chart(topProductsCanvas, { type:'bar', data:{ labels, datasets:[{ label:'Top 5 Produtos (R$)', data, backgroundColor: ['rgba(79, 70, 229, 0.8)', 'rgba(79, 70, 229, 0.7)', 'rgba(79, 70, 229, 0.6)', 'rgba(79, 70, 229, 0.5)', 'rgba(79, 70, 229, 0.4)'] }] }, options:{ maintainAspectRatio:false, responsive:true, scales:{ y:{ beginAtZero:true } } } });
-    };
+    function filterByPeriod(data, period) { const n=new Date(), t=new Date(n.getFullYear(),n.getMonth(),n.getDate()); if(period==='today')return data.filter(i=>new Date(i.date.seconds*1000)>=t); if(period==='week'){const s=new Date(t);s.setDate(t.getDate()-t.getDay());return data.filter(i=>new Date(i.date.seconds*1000)>=s);} if(period==='month'){const m=new Date(n.getFullYear(),n.getMonth(),1);return data.filter(i=>new Date(i.date.seconds*1000)>=m);} return data; }
+    const updateSalesChart = (d) => { const s=d.reduce((a,c)=>{const dt=new Date(c.date.seconds*1000).toLocaleDateString('pt-BR');a[dt]=(a[dt]||0)+c.total;return a;},{}); const l=Object.keys(s),v=Object.values(s);if(salesChart)salesChart.destroy();salesChart=new Chart(salesChartCanvas,{type:'line',data:{labels:l,datasets:[{label:'Vendas/Dia (R$)',data:v,borderColor:'#4f46e5',backgroundColor:'rgba(79,70,229,0.1)',fill:true,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}});};
+    const updateTopProductsChart = (d) => { const p=d.reduce((a,s)=>{a[s.productName]=(a[s.productName]||0)+s.total;return a;},{}); const s=Object.entries(p).sort(([,a],[,b])=>b-a).slice(0,5); const l=s.map(([n])=>n),v=s.map(([,t])=>t);if(topProductsChart)topProductsChart.destroy();topProductsChart=new Chart(topProductsCanvas,{type:'bar',data:{labels:l,datasets:[{label:'Top 5 (R$)',data:v,backgroundColor:['#4f46e5a0','#4f46e590','#4f46e580','#4f46e570','#4f46e560']}]},options:{maintainAspectRatio:false,responsive:true,scales:{y:{beginAtZero:true}}}});};
     
     // --- EVENT LISTENERS ---
     menuToggle.addEventListener('click', () => sidebar.classList.toggle('show'));
-    filterButtons.forEach(button => { button.addEventListener('click', () => { filterButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); const period = button.dataset.period; updateDashboard(period); }); });
-    navLinks.forEach(link => { link.addEventListener('click', e => { if (sidebar.classList.contains('show')) { sidebar.classList.remove('show'); } e.preventDefault(); const t = link.getAttribute('href').substring(1); navLinks.forEach(l => l.classList.remove('active')); link.classList.add('active'); contentSections.forEach(s => { if(s.id === t) s.classList.remove('hidden'); else s.classList.add('hidden'); }); }); });
-    addProductForm.addEventListener('submit', async e => { e.preventDefault(); const p = { name:productNameInput.value, stock:parseInt(productStockInput.value), price:parseFloat(productPriceInput.value), empresaId: empresaLogadaId }; if(!p.name || isNaN(p.stock) || isNaN(p.price)) { return alert("Preencha corretamente."); } try { await addDoc(collection(db, "products"), p); addProductForm.reset(); fetchDataAndRender(); alert("Produto adicionado!"); } catch(r) { console.error("Erro: ", r); } });
-    productTableBody.addEventListener('click', async e => { if(e.target.closest('.delete-btn')) { const t = e.target.closest('.delete-btn'), n = t.dataset.id; if(confirm('Excluir este produto?')) { try { await deleteDoc(doc(db, "products", n)); fetchDataAndRender(); alert('Excluído!'); } catch(r) { console.error("Erro: ", r); } } } });
-    addSaleForm.addEventListener('submit', async e => { e.preventDefault(); const t = saleProductSelect.value, n = parseInt(saleQuantityInput.value); if(!t || isNaN(n) || n <= 0) { return alert("Selecione produto e quantidade."); } const o = doc(db, "products", t); try { const c = await getDoc(o); if(!c.exists() || c.data().empresaId !== empresaLogadaId) return alert("Produto não encontrado ou não pertence à sua empresa!"); const d = c.data().stock; if(d < n) return alert("Estoque insuficiente!"); const i = d - n; await updateDoc(o, { stock: i }); await addDoc(collection(db, "sales"), { productId:t, productName:c.data().name, quantity:n, price:c.data().price, total:c.data().price*n, date:serverTimestamp(), empresaId: empresaLogadaId }); addSaleForm.reset(); fetchDataAndRender(); alert("Venda registrada!"); } catch(r) { console.error("Erro: ", r); } });
-    addPurchaseForm.addEventListener('submit', async e => { e.preventDefault(); const t = purchaseProductSelect.value, n = parseInt(purchaseQuantityInput.value); if(!t || isNaN(n) || n <= 0) { return alert("Selecione produto e quantidade."); } const o = doc(db, "products", t); try { const c = await getDoc(o); if(!c.exists() || c.data().empresaId !== empresaLogadaId) return alert("Produto não encontrado ou não pertence à sua empresa!"); const d = c.data().stock, i = d + n; await updateDoc(o, { stock: i }); addPurchaseForm.reset(); fetchDataAndRender(); alert("Compra registrada!"); } catch(r) { console.error("Erro: ", r); } });
-    productSearchInput.addEventListener('input', e => renderProductTable(e.target.value));
+    filterButtons.forEach(b => b.addEventListener('click', () => { filterButtons.forEach(btn => btn.classList.remove('active')); b.classList.add('active'); updateDashboard(b.dataset.period); }));
+    navLinks.forEach(l => { l.addEventListener('click', e => { if(sidebar.classList.contains('show'))sidebar.classList.remove('show'); e.preventDefault(); const t=l.getAttribute('href').substring(1); navLinks.forEach(i=>i.classList.remove('active'));l.classList.add('active'); contentSections.forEach(s=>{if(s.id===t)s.classList.remove('hidden');else s.classList.add('hidden');});});});
+    addProductForm.addEventListener('submit',async e=>{e.preventDefault();const p={name:productNameInput.value,stock:parseInt(productStockInput.value),price:parseFloat(productPriceInput.value),empresaId};if(!p.name||isNaN(p.stock)||isNaN(p.price)){return alert("Preencha.");}try{await addDoc(collection(db,"products"),p);addProductForm.reset();fetchDataAndRender();alert("Adicionado!");}catch(r){console.error(r);}});
+    productTableBody.addEventListener('click',async e=>{if(e.target.closest('.delete-btn')){const t=e.target.closest('.delete-btn'),n=t.dataset.id;if(confirm('Excluir?')){try{await deleteDoc(doc(db,"products",n));fetchDataAndRender();alert('Excluído!');}catch(r){console.error(r);}}}});
+    addSaleForm.addEventListener('submit',async e=>{e.preventDefault();const pId=saleProductSelect.value,q=parseInt(saleQuantityInput.value);if(!pId||isNaN(q)||q<=0){return alert("Selecione.");}const ref=doc(db,"products",pId);try{const s=await getDoc(ref);if(!s.exists()||s.data().empresaId!==empresaLogadaId)return alert("Não encontrado.");const cs=s.data().stock;if(cs<q)return alert("Insuficiente!");await updateDoc(ref,{stock:cs-q});await addDoc(collection(db,"sales"),{productId:pId,productName:s.data().name,quantity:q,price:s.data().price,total:s.data().price*q,date:serverTimestamp(),empresaId});addSaleForm.reset();fetchDataAndRender();alert("Venda registrada!");}catch(r){console.error(r);}});
+    productSearchInput.addEventListener('input', e=>renderProductTable(e.target.value));
 
-    // --- INICIALIZAÇÃO ---
+    // LÓGICA DO FORMULÁRIO FINANCEIRO INTELIGENTE
+    expenseCategoryInput.addEventListener('change', () => { stockUpdateFields.classList.toggle('hidden', expenseCategoryInput.value !== 'Fornecedores'); });
+    updateStockCheck.addEventListener('change', () => { stockInputs.classList.toggle('hidden', !updateStockCheck.checked); });
+    
+    addExpenseForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const expense = { description: expenseDescriptionInput.value, value: parseFloat(expenseValueInput.value), category: expenseCategoryInput.value, date: serverTimestamp(), empresaId: empresaLogadaId };
+        if (!expense.description || isNaN(expense.value) || !expense.category) return alert("Preencha todos os campos da despesa.");
+        
+        try {
+            await addDoc(collection(db, "despesas"), expense);
+
+            // Se for compra de fornecedor e a opção estiver marcada, atualiza o estoque
+            if (expense.category === 'Fornecedores' && updateStockCheck.checked) {
+                const prodId = expenseProductSelect.value;
+                const quant = parseInt(expenseQuantity.value);
+                if (prodId && !isNaN(quant) && quant > 0) {
+                    const prodRef = doc(db, "products", prodId);
+                    const prodSnap = await getDoc(prodRef);
+                    if (prodSnap.exists() && prodSnap.data().empresaId === empresaLogadaId) {
+                        const currentStock = prodSnap.data().stock;
+                        await updateDoc(prodRef, { stock: currentStock + quant });
+                    }
+                } else {
+                    alert("Aviso: Despesa registada, mas o estoque não foi atualizado por falta de dados do produto.");
+                }
+            }
+            
+            addExpenseForm.reset();
+            stockUpdateFields.classList.add('hidden');
+            stockInputs.classList.add('hidden');
+            fetchDataAndRender();
+            alert("Despesa adicionada com sucesso!");
+        } catch (error) { console.error("Erro ao adicionar despesa:", error); alert("Erro ao salvar a despesa."); }
+    });
+
     fetchDataAndRender();
 }
