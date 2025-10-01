@@ -1,7 +1,7 @@
 // Importa as funções do Firestore e Auth que vamos usar
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-import { 
-    collection, getDocs, addDoc, deleteDoc, doc, 
+import {
+    collection, getDocs, addDoc, deleteDoc, doc,
     getDoc, updateDoc, serverTimestamp, query, where
 } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
@@ -21,7 +21,7 @@ async function iniciarAplicacao(user) {
 
     // --- ELEMENTOS DO DOM ---
     const navLinks=document.querySelectorAll('nav a'), contentSections=document.querySelectorAll('.content-section'), totalRevenueEl=document.getElementById('total-revenue'), totalExpensesEl=document.getElementById('total-expenses'), grossProfitEl=document.getElementById('gross-profit'), totalProductsEl=document.getElementById('total-products'), lowStockItemsEl=document.getElementById('low-stock-items'), salesChartCanvas=document.getElementById('salesChart'), topProductsCanvas=document.getElementById('topProductsChart'), filterButtons=document.querySelectorAll('.filter-btn'), addProductForm=document.getElementById('addProductForm'), productNameInput=document.getElementById('productName'), productStockInput=document.getElementById('productStock'), productPriceInput=document.getElementById('productPrice'), productTableBody=document.getElementById('productTableBody'), productSearchInput=document.getElementById('productSearch'), saleProductSelect=document.getElementById('saleProductSelect'), saleQuantityInput=document.getElementById('saleQuantity'), addSaleForm=document.getElementById('addSaleForm'), menuToggle=document.querySelector('.menu-toggle'), sidebar=document.querySelector('.sidebar'), addExpenseForm=document.getElementById('addExpenseForm'), expenseDescriptionInput=document.getElementById('expenseDescription'), expenseValueInput=document.getElementById('expenseValue'), expenseCategoryInput=document.getElementById('expenseCategory'), expensesTableBody=document.getElementById('expensesTableBody'), stockUpdateFields=document.getElementById('stockUpdateFields'), updateStockCheck=document.getElementById('updateStockCheck'), stockInputs=document.getElementById('stockInputs'), expenseProductSelect=document.getElementById('expenseProductSelect'), expenseQuantity=document.getElementById('expenseQuantity');
-    
+
     document.getElementById('current-year').textContent = new Date().getFullYear();
     if (!document.getElementById('logoutBtn')) { const li = document.createElement('li'); li.innerHTML = `<a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Sair</a>`; document.querySelector('.sidebar nav ul').appendChild(li); li.addEventListener('click', () => signOut(auth)); }
 
@@ -55,25 +55,25 @@ async function iniciarAplicacao(user) {
     function filterByPeriod(data, period) { const n=new Date(), t=new Date(n.getFullYear(),n.getMonth(),n.getDate()); if(period==='today')return data.filter(i=>new Date(i.date.seconds*1000)>=t); if(period==='week'){const s=new Date(t);s.setDate(t.getDate()-t.getDay());return data.filter(i=>new Date(i.date.seconds*1000)>=s);} if(period==='month'){const m=new Date(n.getFullYear(),n.getMonth(),1);return data.filter(i=>new Date(i.date.seconds*1000)>=m);} return data; }
     const updateSalesChart = (d) => { const s=d.reduce((a,c)=>{const dt=new Date(c.date.seconds*1000).toLocaleDateString('pt-BR');a[dt]=(a[dt]||0)+c.total;return a;},{}); const l=Object.keys(s),v=Object.values(s);if(salesChart)salesChart.destroy();salesChart=new Chart(salesChartCanvas,{type:'line',data:{labels:l,datasets:[{label:'Vendas/Dia (R$)',data:v,borderColor:'#4f46e5',backgroundColor:'rgba(79,70,229,0.1)',fill:true,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}});};
     const updateTopProductsChart = (d) => { const p=d.reduce((a,s)=>{a[s.productName]=(a[s.productName]||0)+s.total;return a;},{}); const s=Object.entries(p).sort(([,a],[,b])=>b-a).slice(0,5); const l=s.map(([n])=>n),v=s.map(([,t])=>t);if(topProductsChart)topProductsChart.destroy();topProductsChart=new Chart(topProductsCanvas,{type:'bar',data:{labels:l,datasets:[{label:'Top 5 (R$)',data:v,backgroundColor:['#4f46e5a0','#4f46e590','#4f46e580','#4f46e570','#4f46e560']}]},options:{maintainAspectRatio:false,responsive:true,scales:{y:{beginAtZero:true}}}});};
-    
+
     // --- EVENT LISTENERS ---
     menuToggle.addEventListener('click', () => sidebar.classList.toggle('show'));
     filterButtons.forEach(b => b.addEventListener('click', () => { filterButtons.forEach(btn => btn.classList.remove('active')); b.classList.add('active'); updateDashboard(b.dataset.period); }));
     navLinks.forEach(l => { l.addEventListener('click', e => { if(sidebar.classList.contains('show'))sidebar.classList.remove('show'); e.preventDefault(); const t=l.getAttribute('href').substring(1); navLinks.forEach(i=>i.classList.remove('active'));l.classList.add('active'); contentSections.forEach(s=>{if(s.id===t)s.classList.remove('hidden');else s.classList.add('hidden');});});});
-    addProductForm.addEventListener('submit',async e=>{e.preventDefault();const p={name:productNameInput.value,stock:parseInt(productStockInput.value),price:parseFloat(productPriceInput.value),empresaId};if(!p.name||isNaN(p.stock)||isNaN(p.price)){return alert("Preencha.");}try{await addDoc(collection(db,"products"),p);addProductForm.reset();fetchDataAndRender();alert("Adicionado!");}catch(r){console.error(r);}});
+    addProductForm.addEventListener('submit',async e=>{e.preventDefault();const p={name:productNameInput.value,stock:parseInt(productStockInput.value),price:parseFloat(productPriceInput.value),empresaId: empresaLogadaId};if(!p.name||isNaN(p.stock)||isNaN(p.price)){return alert("Preencha.");}try{await addDoc(collection(db,"products"),p);addProductForm.reset();fetchDataAndRender();alert("Adicionado!");}catch(r){console.error(r);}});
     productTableBody.addEventListener('click',async e=>{if(e.target.closest('.delete-btn')){const t=e.target.closest('.delete-btn'),n=t.dataset.id;if(confirm('Excluir?')){try{await deleteDoc(doc(db,"products",n));fetchDataAndRender();alert('Excluído!');}catch(r){console.error(r);}}}});
-    addSaleForm.addEventListener('submit',async e=>{e.preventDefault();const pId=saleProductSelect.value,q=parseInt(saleQuantityInput.value);if(!pId||isNaN(q)||q<=0){return alert("Selecione.");}const ref=doc(db,"products",pId);try{const s=await getDoc(ref);if(!s.exists()||s.data().empresaId!==empresaLogadaId)return alert("Não encontrado.");const cs=s.data().stock;if(cs<q)return alert("Insuficiente!");await updateDoc(ref,{stock:cs-q});await addDoc(collection(db,"sales"),{productId:pId,productName:s.data().name,quantity:q,price:s.data().price,total:s.data().price*q,date:serverTimestamp(),empresaId});addSaleForm.reset();fetchDataAndRender();alert("Venda registrada!");}catch(r){console.error(r);}});
+    addSaleForm.addEventListener('submit',async e=>{e.preventDefault();const pId=saleProductSelect.value,q=parseInt(saleQuantityInput.value);if(!pId||isNaN(q)||q<=0){return alert("Selecione.");}const ref=doc(db,"products",pId);try{const s=await getDoc(ref);if(!s.exists()||s.data().empresaId!==empresaLogadaId)return alert("Não encontrado.");const cs=s.data().stock;if(cs<q)return alert("Insuficiente!");await updateDoc(ref,{stock:cs-q});await addDoc(collection(db,"sales"),{productId:pId,productName:s.data().name,quantity:q,price:s.data().price,total:s.data().price*q,date:serverTimestamp(),empresaId: empresaLogadaId});addSaleForm.reset();fetchDataAndRender();alert("Venda registrada!");}catch(r){console.error(r);}});
     productSearchInput.addEventListener('input', e=>renderProductTable(e.target.value));
 
     // LÓGICA DO FORMULÁRIO FINANCEIRO INTELIGENTE
     expenseCategoryInput.addEventListener('change', () => { stockUpdateFields.classList.toggle('hidden', expenseCategoryInput.value !== 'Fornecedores'); });
     updateStockCheck.addEventListener('change', () => { stockInputs.classList.toggle('hidden', !updateStockCheck.checked); });
-    
+
     addExpenseForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const expense = { description: expenseDescriptionInput.value, value: parseFloat(expenseValueInput.value), category: expenseCategoryInput.value, date: serverTimestamp(), empresaId: empresaLogadaId };
         if (!expense.description || isNaN(expense.value) || !expense.category) return alert("Preencha todos os campos da despesa.");
-        
+
         try {
             await addDoc(collection(db, "despesas"), expense);
 
@@ -92,7 +92,7 @@ async function iniciarAplicacao(user) {
                     alert("Aviso: Despesa registada, mas o estoque não foi atualizado por falta de dados do produto.");
                 }
             }
-            
+
             addExpenseForm.reset();
             stockUpdateFields.classList.add('hidden');
             stockInputs.classList.add('hidden');
