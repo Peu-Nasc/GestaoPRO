@@ -84,6 +84,23 @@ th { font-weight: 600; }
 /* --- (Resto do CSS até à seção de responsividade) --- */
 .dashboard-charts{display:grid;grid-template-columns:1fr;gap:1.5rem;margin-top:2rem}.chart-container{position:relative;min-width:0;height:300px;overflow:hidden}.chart-container h3{margin-bottom:1rem;font-weight:600;text-align:center}.mobile-header,.menu-toggle{display:none}footer{flex-shrink:0;text-align:center;padding:1.5rem;background-color:#e5e7eb;color:#6b7280;font-size:.9rem;border-top:1px solid var(--border-color);margin-left:250px;transition:margin-left .3s ease-in-out}footer a{color:var(--primary-color);font-weight:600;text-decoration:none}footer a:hover{text-decoration:underline}
 
+/* --- Ajuste para novo ícone de Clientes na Navegação --- */
+.sidebar nav a i.fa-users {
+    /* (Opcional) Adicionar estilos específicos se necessário */
+    font-size: 0.9em; /* Exemplo: Leve ajuste de tamanho */
+}
+
+/* --- Garantir consistência em todas as tabelas e formulários --- */
+.table-container input[type="text"],
+.table-container input[type="search"] {
+    width: 100%;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
 /* --- Responsividade --- */
 @media (min-width: 993px) { .dashboard-charts { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 992px) {
@@ -113,3 +130,4 @@ th { font-weight: 600; }
     .table-container { overflow-x: auto; }
     .chart-container { height: 220px; }
 }
+
